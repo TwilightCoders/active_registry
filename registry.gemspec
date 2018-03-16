@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib', 'spec']
 
-  spec.required_ruby_version = '>= 2.1'
+  spec.required_ruby_version = '>= 2.2'
 
   spec.add_development_dependency 'pry-byebug', '~> 3'
   spec.add_development_dependency 'bundler', '~> 1.0'
