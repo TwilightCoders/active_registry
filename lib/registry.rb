@@ -48,7 +48,11 @@ class Registry < Set
 
   def [](idx, value)
     raise "No '#{idx}' index! Add it with '.index(:#{idx})'" and return SubSet.new unless @indexed.include?(idx)
-    @indexed.dig(idx, value) || []
+    if (subset = @indexed[idx])
+      subset[value] || []
+    else
+      []
+    end
   end
 
   def find(idx, value)
