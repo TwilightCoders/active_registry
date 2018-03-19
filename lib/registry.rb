@@ -55,7 +55,7 @@ class Registry < Set
     end
   end
 
-  def find(idx, value)
+  def first(idx, value)
     self[idx, value].first
   end
 

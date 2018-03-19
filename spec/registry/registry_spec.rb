@@ -73,7 +73,7 @@ RSpec.describe Registry do
     d = r2[:name, 'Dale'].first
     d.name = "Bob"
 
-    expect(r2.find(:name, 'Bob')).to eq(d)
+    expect(r2.first(:name, 'Bob')).to eq(d)
   end
 
   it 'unwatches' do
