@@ -46,7 +46,7 @@ class Registry < Set
   end
   alias << add
 
-  def [](idx, value)
+  def find(idx, value)
     raise "No '#{idx}' index! Add it with '.index(:#{idx})'" and return SubSet.new unless @indexed.include?(idx)
     if (subset = @indexed[idx])
       subset[value] || []
@@ -54,6 +54,7 @@ class Registry < Set
       []
     end
   end
+  alias [] find
 
   def first(idx, value)
     self[idx, value].first
