@@ -46,7 +46,7 @@ class Registry < Set
   end
   alias << add
 
-  def [](idx, value)
+  def access(idx, value)
     raise "No '#{idx}' index! Add it with '.index(:#{idx})'" and return SubSet.new unless @indexed.include?(idx)
     if (subset = @indexed[idx])
       subset[value] || []
@@ -54,16 +54,49 @@ class Registry < Set
       []
     end
   end
+  alias [] access
 
   def find(idx, value)
     self[idx, value].first
   end
 
+  def where(search_criteria)
+    index = compound_stringify(search_criteria.keys)
+
+    if @indexed.key?(index)
+      value = compound_stringify(search_criteria.values)
+      elements = access(index, value)
+    else
+      elements = select do |el|
+        search_criteria.inject(true) do |pred, criteria|
+          pred && el.send(criteria[0]) == criteria[1]
+        end
+      end
+    end
+
+    elements
+  end
+
   def index(*indexes)
     indexes.each do |idx|
-      warn "Index #{idx} already exists!" and next if @indexed.key?(idx)
+      is_compound_index = idx.kind_of?(Array)
+
+      if is_compound_index
+        idx.compact!
+        idx_key = compound_stringify(idx.sort)
+      else
+        idx_key = idx.to_sym
+      end
+
+      warn "Index #{idx} already exists!" and next if @indexed.key?(idx_key)
       each { |item| watch_setter(item, idx) }
-      @indexed[idx] = group_by { |a| a.send(idx) }
+      @indexed[idx_key] = group_by { |a|
+        if is_compound_index
+          compound_stringify(idx.map { |x| a.send(x) })
+        else
+          a.send(idx)
+        end
+      }
     end
   end
 
@@ -84,6 +117,10 @@ class Registry < Set
   end
 
   private
+
+  def compound_stringify(values)
+    values.map(&:to_s).sort.join('-').to_sym
+  end
 
   def watch_setter(item, idx)
     return if item.frozen?

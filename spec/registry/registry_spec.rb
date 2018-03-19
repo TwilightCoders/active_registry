@@ -91,4 +91,61 @@ RSpec.describe Registry do
     expect(d.name).to eq("Bob")
   end
 
+  context 'Access' do
+    Vehicle = Struct.new(:id, :year, :type, :color)
+    let(:v1) { Vehicle.new(1, 2000, 'car', 'blue') }
+    let(:v2) { Vehicle.new(2, 2005, 'car', 'blue') }
+    let(:v3) { Vehicle.new(3, 2005, 'car', 'red') }
+    let(:v4) { Vehicle.new(4, 2005, 'truck', 'red') }
+    let!(:registry) { Registry.new([v1, v2, v3, v4]) }
+    context 'Access' do
+      context 'with no index' do
+        it 'should return 2 records' do
+          vehicles = registry.where(type: 'car', color: 'blue')
+          expect(vehicles.count).to eq(2)
+        end
+
+        it 'should return 3 records' do
+          vehicles = registry.where(year: 2005)
+          expect(vehicles.count).to eq(3)
+        end
+      end
+
+      context 'with compound index' do
+        before(:each) do
+          registry.index([:type, :color])
+        end
+
+        it 'should return 2 records' do
+          vehicles = registry.where(type: 'car', color: 'blue')
+          expect(vehicles.count).to eq(2)
+        end
+
+        it 'should return 0 records' do
+          vehicles = registry.where(type: 'motorcycle', color: 'yellow')
+          expect(vehicles.count).to eq(0)
+        end
+
+        it 'should return 3 records' do
+          vehicles = registry.where(type: 'car')
+          expect(vehicles.count).to eq(3)
+        end
+      end
+    end
+  end
+
+  context 'Compound Index' do
+    Animal = Struct.new(:id, :name, :age)
+    let(:a1) { Animal.new(1, "Corinthias", 10) }
+    let(:a2) { Animal.new(2, "Gerry", 20) }
+    let!(:registry) { Registry.new([a1, a2]) }
+
+    it 'should create a compound index successfully' do
+      expect{registry.index([:name, :age])}.to_not raise_error
+    end
+
+    it 'should ignore nil values as part of the index' do
+      expect{registry.index([:name, :age, nil])}.to_not raise_error
+    end
+  end
 end
