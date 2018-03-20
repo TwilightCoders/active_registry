@@ -61,12 +61,12 @@ RSpec.describe Registry do
   end
 
   context "Indexing" do
-    let!(:r2) { Registry.new([ u1, u2 ]) }
+    let!(:registry) { Registry.new([ u1, u2 ]) }
 
     it 'indexes' do
-      r2.index(:name)
+      registry.index(:name)
 
-      expect(r2.to_h).to eq({
+      expect(registry.to_h).to eq({
         object_id: {
           u1.object_id => [u1],
           u2.object_id => [u2]
@@ -80,12 +80,12 @@ RSpec.describe Registry do
     end
 
     it 'reindexes' do
-      r2.index(:name)
+      registry.index(:name)
 
-      d = r2[:name, 'Dale'].first
+      d = registry[:name, 'Dale'].first
       d.name = "Bob"
 
-      expect(r2[:name, 'Bob'].first).to eq(d)
+      expect(registry[:name, 'Bob'].first).to eq(d)
     end
   end
 
@@ -112,22 +112,22 @@ RSpec.describe Registry do
   end
 
   context 'unwatches' do
-    let!(:r2) { Registry.new([ u1, u2 ]) }
+    let!(:registry) { Registry.new([ u1, u2 ]) }
 
     before(:each) do
-      r2.index(:name)
+      registry.index(:name)
     end
 
     it 'should not include expected methods' do
-      d = r2[:name, 'Dale'].first
-      r2.delete(d)
+      d = registry[:name, 'Dale'].first
+      registry.delete(d)
 
       expect(d.methods).to_not include(:__watched_name=, :__unwatched_name=)
     end
 
     it 'should set the name after removing an element from the registry' do
-      d = r2[:name, 'Dale'].first
-      r2.delete(d)
+      d = registry[:name, 'Dale'].first
+      registry.delete(d)
 
       d.name="Bob"
       expect(d.name).to eq("Bob")
