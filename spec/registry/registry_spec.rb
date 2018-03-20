@@ -49,23 +49,23 @@ RSpec.describe Registry do
     end
 
     it 'should return a registry' do
-      subregistry = registry.find(name: 'Dale')
+      subregistry = registry.where(name: 'Dale')
       expect(subregistry).to be_a_kind_of(Registry)
     end
 
     it 'should be able to access with the subregistry' do
-      subregistry = registry.find(name: 'Dale')
-      item = subregistry.find(email: 'dale@chillywinds.com')
+      subregistry = registry.where(name: 'Dale')
+      item = subregistry.where(email: 'dale@chillywinds.com')
       expect(item.first).to eq(u2)
     end
 
     it 'should be able to access with the subregistry' do
-      subregistry = registry.find(name: 'Dale', email: 'dale@chillywinds.com')
+      subregistry = registry.where(name: 'Dale', email: 'dale@chillywinds.com')
       expect(subregistry.first).to eq(u2)
     end
 
     it 'should be able to access with the subregistry' do
-      subregistry = registry.find(name: 'Dale', email: 'snail@chillywinds.com')
+      subregistry = registry.where(name: 'Dale', email: 'snail@chillywinds.com')
       expect(subregistry.count).to eq(0)
     end
   end
@@ -90,10 +90,10 @@ RSpec.describe Registry do
     it 'reindexes' do
       registry.index(:name)
 
-      d = registry.find(name: 'Dale').first
+      d = registry.where(name: 'Dale').first
       d.name = "Bob"
 
-      expect(registry.find(name: 'Bob').first).to eq(d)
+      expect(registry.where(name: 'Bob').first).to eq(d)
     end
   end
 
@@ -109,12 +109,12 @@ RSpec.describe Registry do
     end
 
     it 'should add only two methods' do
-      d = registry.find(name: 'Boris').first
+      d = registry.where(name: 'Boris').first
       expect(d.methods.count).to eq(a1_original_method_count + 2)
     end
 
     it 'should include expected methods' do
-      d = registry.find(name: 'Boris').first
+      d = registry.where(name: 'Boris').first
       expect(d.methods).to include(:__watched_name=, :__unwatched_name=)
     end
   end
@@ -127,14 +127,14 @@ RSpec.describe Registry do
     end
 
     it 'should not include expected methods' do
-      d = registry.find(name: 'Dale').first
+      d = registry.where(name: 'Dale').first
       registry.delete(d)
 
       expect(d.methods).to_not include(:__watched_name=, :__unwatched_name=)
     end
 
     it 'should set the name after removing an element from the registry' do
-      d = registry.find(name: 'Dale').first
+      d = registry.where(name: 'Dale').first
       registry.delete(d)
 
       d.name="Bob"
