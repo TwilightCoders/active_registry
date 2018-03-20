@@ -49,7 +49,11 @@ class Registry < Set
   def access(idx, value)
     raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
     elements = @indexed.dig(idx, value) || []
-    elements
+    subset_registry = Registry.new(elements)
+    existing_indexes = @indexed.keys
+    existing_indexes.delete(:object_id)
+    existing_indexes.each { |existing_index| subset_registry.index(existing_index) }
+    subset_registry
   end
   alias [] access
 
@@ -82,7 +86,7 @@ class Registry < Set
   def watch_setter(item, idx)
     return if item.frozen?
     __registry__ = self
-    item.public_methods.select { |m| m.match(/#{idx}=/) }.each do |original_method|
+    item.public_methods.select { |m| m.match(/^#{idx}=$/) }.each do |original_method|
       watched_method = "__watched_#{original_method}".to_sym
       renamed_method = "__unwatched_#{original_method}".to_sym
       next if item.methods.include?(watched_method)
@@ -102,7 +106,7 @@ class Registry < Set
 
   def ignore_setter(item, idx)
     return if item.frozen?
-    item.public_methods.select { |m| m.match(/#{idx}=/) }.each do |original_method|
+    item.public_methods.select { |m| m.match(/^#{idx}=$/) }.each do |original_method|
       watched_method = "__watched_#{original_method}".to_sym
       renamed_method = "__unwatched_#{original_method}".to_sym
       next unless item.methods.include?(watched_method)
