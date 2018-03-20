@@ -6,7 +6,6 @@ SimpleCov.start do
   add_filter 'spec'
 end
 
-require 'record'
 require 'registry'
 
 RSpec.configure do |config|
