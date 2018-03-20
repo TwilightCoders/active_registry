@@ -7,7 +7,7 @@ class Registry < Set
   def initialize(*args, indexes: [])
     @indexed = {}
     super(*args)
-    index(*([DEFAULT_INDEX] | indexes))
+    reindex!(indexes)
   end
 
   def inspect
@@ -57,8 +57,7 @@ class Registry < Set
     end
 
     subset_elements = sets.reduce(sets.first, &:&)
-    subset_registry = Registry.new(subset_elements)
-    indexes.each { |existing_index| subset_registry.index(existing_index) }
+    subset_registry = Registry.new(subset_elements, indexes: indexes)
     subset_registry
   end
 
@@ -73,14 +72,13 @@ class Registry < Set
   end
 
   def reindex!(indexes = [])
-    (indexes = @indexed.keys & [indexes].flatten).any? || indexes = @indexed.keys
     @indexed = {}
-    index(DEFAULT_INDEX)
-    index(*indexes)
+    index(*([DEFAULT_INDEX] | indexes))
   end
 
   protected
-def reindex(idx, item, old_value, new_value)
+
+  def reindex(idx, item, old_value, new_value)
     if (new_value != old_value)
       @indexed[idx][old_value].delete item
       (@indexed[idx][new_value] ||= Set.new).add item
