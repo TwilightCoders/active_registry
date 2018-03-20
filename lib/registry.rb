@@ -46,7 +46,7 @@ class Registry < Set
   end
   alias << add
 
-  def find(idx, value)
+  def access(idx, value)
     raise "No '#{idx}' index! Add it with '.index(:#{idx})'" and return SubSet.new unless @indexed.include?(idx)
     if (subset = @indexed[idx])
       subset[value] || []
@@ -54,7 +54,7 @@ class Registry < Set
       []
     end
   end
-  alias [] find
+  alias [] access
 
   def index(*indexes)
     indexes.each do |idx|
