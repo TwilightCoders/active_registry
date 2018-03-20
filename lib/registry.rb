@@ -48,11 +48,11 @@ class Registry < Set
 
   def access(idx, value)
     raise "No '#{idx}' index! Add it with '.index(:#{idx})'" and return SubSet.new unless @indexed.include?(idx)
+    elements = []
     if (subset = @indexed[idx])
-      subset[value] || []
-    else
-      []
+      elements = subset[value] || []
     end
+    elements
   end
   alias [] access
 
