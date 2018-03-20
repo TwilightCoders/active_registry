@@ -56,10 +56,6 @@ class Registry < Set
   end
   alias [] find
 
-  def first(idx, value)
-    self[idx, value].first
-  end
-
   def index(*indexes)
     indexes.each do |idx|
       warn "Index #{idx} already exists!" and next if @indexed.key?(idx)
