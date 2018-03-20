@@ -4,10 +4,10 @@ class Registry < Set
 
   DEFAULT_INDEX = :object_id
 
-  def initialize(*args)
+  def initialize(*args, indexes: [])
     @indexed = {}
-    super
-    index(DEFAULT_INDEX)
+    super(*args)
+    index(*([DEFAULT_INDEX] | indexes))
   end
 
   def inspect
@@ -16,6 +16,10 @@ class Registry < Set
 
   def to_h
     @indexed
+  end
+
+  def indexes
+    @indexed.keys - [:object_id]
   end
 
   def delete(item)
@@ -47,18 +51,14 @@ class Registry < Set
   alias << add
 
   def find(search_criteria)
-    sets = []
-    search_criteria.each do |idx, value|
+    sets = search_criteria.inject([]) do |sets, (idx, value)|
       raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
-      set = @indexed.dig(idx, value) || Set.new
-      sets.push(set)
+      sets << (@indexed.dig(idx, value) || Set.new)
     end
 
-    subset_elements  = sets.reduce(sets.first, &:&)
-    subset_registry  = Registry.new(subset_elements)
-    existing_indexes = @indexed.keys
-    existing_indexes.delete(:object_id)
-    existing_indexes.each { |existing_index| subset_registry.index(existing_index) }
+    subset_elements = sets.reduce(sets.first, &:&)
+    subset_registry = Registry.new(subset_elements)
+    indexes.each { |existing_index| subset_registry.index(existing_index) }
     subset_registry
   end
 
