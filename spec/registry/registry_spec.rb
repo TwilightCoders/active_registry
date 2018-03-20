@@ -42,15 +42,21 @@ RSpec.describe Registry do
   end
 
   context "Access" do
-    let!(:r1) { Registry.new([u1, u2, u3]) }
+    let!(:registry) { Registry.new([u1, u2, u3]) }
 
     before(:each) do
-      r1.index(:name, :email)
+      registry.index(:name, :email)
     end
 
     it 'should return a registry' do
-      items = r1[:name, 'Dale']
-      expect(items).to be_a_kind_of(Registry)
+      subregistry = registry[:name, 'Dale']
+      expect(subregistry).to be_a_kind_of(Registry)
+    end
+
+    it 'should be able to access with the subregistry' do
+      subregistry = registry[:name, 'Dale']
+      item = subregistry[:email, 'dale@chillywinds.com']
+      expect(item.first).to eq(u2)
     end
   end
 
