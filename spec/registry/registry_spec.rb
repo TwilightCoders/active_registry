@@ -7,7 +7,7 @@ RSpec.describe Registry do
   let(:u3) { Person.new(3, 'Foo', 'foobar@twilightcoders.net') }
 
   context 'Adding' do
-    let(:r1) { Registry.new([ u1, u2 ]) }
+    let!(:r1) { Registry.new([ u1, u2 ]) }
 
     it 'should add the correct item' do
       r1 << u3
@@ -23,7 +23,7 @@ RSpec.describe Registry do
   end
 
   context 'Deleting' do
-    let(:r1) { Registry.new([ u1, u2 ]) }
+    let!(:r1) { Registry.new([ u1, u2 ]) }
 
     before(:each) do
       r1 << u3
@@ -42,7 +42,7 @@ RSpec.describe Registry do
   end
 
   context "Indexing" do
-    let(:r2) { Registry.new([ u1, u2 ]) }
+    let!(:r2) { Registry.new([ u1, u2 ]) }
 
     it 'indexes' do
       r2.index(:name)
@@ -68,32 +68,50 @@ RSpec.describe Registry do
 
       expect(r2[:name, 'Bob'].first).to eq(d)
     end
+  end
 
-    context 'unwatches' do
-      before(:each) do
-        r2.index(:name)
-      end
+  context 'watches' do
+    Animal = Struct.new(:id, :name)
+    let!(:a1) { Animal.new(1, 'Boris') }
+    let!(:a1_original_methods) { a1.methods }
+    let!(:a1_original_method_count) { a1.methods.count }
+    let!(:r3) { Registry.new([ a1 ]) }
 
-      it 'should include expected methods' do
-        d = r2[:name, 'Dale'].first
+    before(:each) do
+      r3.index(:name)
+    end
 
-        expect(d.methods).to include(:__watched_name=, :__unwatched_name=)
-      end
+    it 'should add only two methods' do
+      d = r3[:name, 'Boris'].first
+      expect(d.methods.count).to eq(a1_original_method_count + 2)
+    end
 
-      it 'should not include expected methods' do
-        d = r2[:name, 'Dale'].first
-        r2.delete(d)
+    it 'should include expected methods' do
+      d = r3[:name, 'Boris'].first
+      expect(d.methods).to include(:__watched_name=, :__unwatched_name=)
+    end
+  end
 
-        expect(d.methods).to_not include(:__watched_name=, :__unwatched_name=)
-      end
+  context 'unwatches' do
+    let!(:r2) { Registry.new([ u1, u2 ]) }
 
-      it 'should set the name after removing an element from the registry' do
-        d = r2[:name, 'Dale'].first
-        r2.delete(d)
+    before(:each) do
+      r2.index(:name)
+    end
 
-        d.name="Bob"
-        expect(d.name).to eq("Bob")
-      end
+    it 'should not include expected methods' do
+      d = r2[:name, 'Dale'].first
+      r2.delete(d)
+
+      expect(d.methods).to_not include(:__watched_name=, :__unwatched_name=)
+    end
+
+    it 'should set the name after removing an element from the registry' do
+      d = r2[:name, 'Dale'].first
+      r2.delete(d)
+
+      d.name="Bob"
+      expect(d.name).to eq("Bob")
     end
   end
 end

@@ -48,7 +48,8 @@ class Registry < Set
 
   def access(idx, value)
     raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
-    @indexed.dig(idx, value) || []
+    elements = @indexed.dig(idx, value) || []
+    elements
   end
   alias [] access
 
