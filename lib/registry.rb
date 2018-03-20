@@ -50,7 +50,7 @@ class Registry < Set
   end
   alias << add
 
-  def find(search_criteria)
+  def where(search_criteria)
     sets = search_criteria.inject([]) do |sets, (idx, value)|
       raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
       sets << (@indexed.dig(idx, value) || Set.new)
