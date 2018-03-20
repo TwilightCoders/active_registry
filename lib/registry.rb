@@ -50,10 +50,7 @@ class Registry < Set
     sets = []
     search_criteria.each do |idx, value|
       raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
-      set = Set.new
-      if (subset = @indexed[idx])
-        set = subset[value] || Set.new
-      end
+      set = @indexed.dig(idx, value) || Set.new
       sets.push(set)
     end
 
