@@ -23,7 +23,7 @@ class Registry < Set
       ignore_setter(item, idx) if include?(item)
       begin
         idx_value = item.send(idx)
-        (store[idx_value] ||= []).delete(item)
+        (store[idx_value] ||= Set.new).delete(item)
         store.delete(idx_value) if store[idx_value].empty?
       rescue NoMethodError => e
         raise "#{item.name} cannot be added because indexable attribute (#{idx}) is missing."
@@ -37,7 +37,7 @@ class Registry < Set
       watch_setter(item, idx) unless include?(item)
       begin
         idx_value = item.send(idx)
-        (store[idx_value] ||= []) << (item)
+        (store[idx_value] ||= Set.new) << (item)
       rescue NoMethodError => e
         raise "#{item.name} cannot be added because indexable attribute (#{idx}) is missing."
       end
@@ -47,12 +47,15 @@ class Registry < Set
   alias << add
 
   def find(search_criteria)
-    idx   = search_criteria.keys.first
-    value = search_criteria.values.first
+    sets = []
+    search_criteria.each do |idx, value|
+      raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
+      set = @indexed.dig(idx, value) or next
+      sets.push(set)
+    end
 
-    raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
-    elements = @indexed.dig(idx, value) || []
-    subset_registry = Registry.new(elements)
+    subset_elements  = sets.reduce(sets.first, &:&)
+    subset_registry  = Registry.new(subset_elements)
     existing_indexes = @indexed.keys
     existing_indexes.delete(:object_id)
     existing_indexes.each { |existing_index| subset_registry.index(existing_index) }
@@ -63,7 +66,9 @@ class Registry < Set
     indexes.each do |idx|
       warn "Index #{idx} already exists!" and next if @indexed.key?(idx)
       each { |item| watch_setter(item, idx) }
-      @indexed[idx] = group_by { |a| a.send(idx) }
+      indexed_elements = group_by { |a| a.send(idx) }
+      indexed_sets = Hash[indexed_elements.keys.zip(indexed_elements.values.map { |e| Set.new(e) })]
+      @indexed[idx] = indexed_sets
     end
   end
 
@@ -79,7 +84,7 @@ class Registry < Set
   def reindex(idx, item, old_value, new_value)
     if (new_value != old_value)
       @indexed[idx][old_value].delete item
-      (@indexed[idx][new_value] ||= []).push item
+      (@indexed[idx][new_value] ||= Set.new).add item
     end
   end
 

@@ -12,13 +12,13 @@ RSpec.describe Registry do
     it 'should add the correct item' do
       r1 << u3
 
-      expect(r1.to_h).to eq({
+      expect(r1).to contain_mappings(
         object_id: {
           u1.object_id => [u1],
           u2.object_id => [u2],
           u3.object_id => [u3]
         }
-      })
+      )
     end
   end
 
@@ -32,12 +32,12 @@ RSpec.describe Registry do
     it 'should remove the correct item' do
       r1.delete(u2)
 
-      expect(r1.to_h).to eq({
+      expect(r1).to contain_mappings(
         object_id: {
           u1.object_id => [u1],
           u3.object_id => [u3]
         }
-      })
+      )
     end
   end
 
@@ -58,6 +58,11 @@ RSpec.describe Registry do
       item = subregistry.find(email: 'dale@chillywinds.com')
       expect(item.first).to eq(u2)
     end
+
+    it 'should be able to access with the subregistry' do
+      subregistry = registry.find(name: 'Dale', email: 'dale@chillywinds.com')
+      expect(subregistry.first).to eq(u2)
+    end
   end
 
   context "Indexing" do
@@ -66,17 +71,15 @@ RSpec.describe Registry do
     it 'indexes' do
       registry.index(:name)
 
-      expect(registry.to_h).to eq({
+      expect(registry).to contain_mappings(
         object_id: {
           u1.object_id => [u1],
           u2.object_id => [u2]
         },
         name: {
-          "Dale" => [
-            u1, u2
-          ]
+          "Dale" => [u1, u2]
         }
-      })
+      )
     end
 
     it 'reindexes' do
