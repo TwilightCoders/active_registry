@@ -41,6 +41,19 @@ RSpec.describe Registry do
     end
   end
 
+  context "Access" do
+    let!(:r1) { Registry.new([u1, u2, u3]) }
+
+    before(:each) do
+      r1.index(:name, :email)
+    end
+
+    it 'should return a registry' do
+      items = r1[:name, 'Dale']
+      expect(items).to be_a_kind_of(Registry)
+    end
+  end
+
   context "Indexing" do
     let!(:r2) { Registry.new([ u1, u2 ]) }
 
@@ -75,19 +88,19 @@ RSpec.describe Registry do
     let!(:a1) { Animal.new(1, 'Boris') }
     let!(:a1_original_methods) { a1.methods }
     let!(:a1_original_method_count) { a1.methods.count }
-    let!(:r3) { Registry.new([ a1 ]) }
+    let!(:registry) { Registry.new([ a1 ]) }
 
     before(:each) do
-      r3.index(:name)
+      registry.index(:name)
     end
 
     it 'should add only two methods' do
-      d = r3[:name, 'Boris'].first
+      d = registry[:name, 'Boris'].first
       expect(d.methods.count).to eq(a1_original_method_count + 2)
     end
 
     it 'should include expected methods' do
-      d = r3[:name, 'Boris'].first
+      d = registry[:name, 'Boris'].first
       expect(d.methods).to include(:__watched_name=, :__unwatched_name=)
     end
   end
