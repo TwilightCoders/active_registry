@@ -50,7 +50,9 @@ class Registry < Set
     sets = []
     search_criteria.each do |idx, value|
       raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
-      set = @indexed.dig(idx, value) or next
+      if (subset = @indexed[idx])
+        set = subset[value] or next
+      end
       sets.push(set)
     end
 
@@ -80,8 +82,7 @@ class Registry < Set
   end
 
   protected
-
-  def reindex(idx, item, old_value, new_value)
+def reindex(idx, item, old_value, new_value)
     if (new_value != old_value)
       @indexed[idx][old_value].delete item
       (@indexed[idx][new_value] ||= Set.new).add item
