@@ -69,19 +69,31 @@ RSpec.describe Registry do
       expect(r2[:name, 'Bob'].first).to eq(d)
     end
 
-    it 'unwatches' do
-      r2.index(:name)
+    context 'unwatches' do
+      before(:each) do
+        r2.index(:name)
+      end
 
-      d = r2[:name, 'Dale'].first
+      it 'should include expected methods' do
+        d = r2[:name, 'Dale'].first
 
-      expect(d.methods).to include(:__watched_name=, :__unwatched_name=)
+        expect(d.methods).to include(:__watched_name=, :__unwatched_name=)
+      end
 
-      r2.delete(d)
+      it 'should not include expected methods' do
+        d = r2[:name, 'Dale'].first
+        r2.delete(d)
 
-      expect(d.methods).to_not include(:__watched_name=, :__unwatched_name=)
+        expect(d.methods).to_not include(:__watched_name=, :__unwatched_name=)
+      end
 
-      d.name="Bob"
-      expect(d.name).to eq("Bob")
+      it 'should set the name after removing an element from the registry' do
+        d = r2[:name, 'Dale'].first
+        r2.delete(d)
+
+        d.name="Bob"
+        expect(d.name).to eq("Bob")
+      end
     end
   end
 end
