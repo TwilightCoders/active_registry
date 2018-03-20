@@ -63,6 +63,11 @@ RSpec.describe Registry do
       subregistry = registry.find(name: 'Dale', email: 'dale@chillywinds.com')
       expect(subregistry.first).to eq(u2)
     end
+
+    it 'should be able to access with the subregistry' do
+      subregistry = registry.find(name: 'Dale', email: 'snail@chillywinds.com')
+      expect(subregistry.count).to eq(0)
+    end
   end
 
   context "Indexing" do
