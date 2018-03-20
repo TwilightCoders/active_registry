@@ -46,7 +46,10 @@ class Registry < Set
   end
   alias << add
 
-  def access(idx, value)
+  def find(search_criteria)
+    idx   = search_criteria.keys.first
+    value = search_criteria.values.first
+
     raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
     elements = @indexed.dig(idx, value) || []
     subset_registry = Registry.new(elements)
@@ -55,7 +58,6 @@ class Registry < Set
     existing_indexes.each { |existing_index| subset_registry.index(existing_index) }
     subset_registry
   end
-  alias [] access
 
   def index(*indexes)
     indexes.each do |idx|

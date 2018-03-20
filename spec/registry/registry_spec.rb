@@ -49,13 +49,13 @@ RSpec.describe Registry do
     end
 
     it 'should return a registry' do
-      subregistry = registry[:name, 'Dale']
+      subregistry = registry.find(name: 'Dale')
       expect(subregistry).to be_a_kind_of(Registry)
     end
 
     it 'should be able to access with the subregistry' do
-      subregistry = registry[:name, 'Dale']
-      item = subregistry[:email, 'dale@chillywinds.com']
+      subregistry = registry.find(name: 'Dale')
+      item = subregistry.find(email: 'dale@chillywinds.com')
       expect(item.first).to eq(u2)
     end
   end
@@ -82,10 +82,10 @@ RSpec.describe Registry do
     it 'reindexes' do
       registry.index(:name)
 
-      d = registry[:name, 'Dale'].first
+      d = registry.find(name: 'Dale').first
       d.name = "Bob"
 
-      expect(registry[:name, 'Bob'].first).to eq(d)
+      expect(registry.find(name: 'Bob').first).to eq(d)
     end
   end
 
@@ -101,12 +101,12 @@ RSpec.describe Registry do
     end
 
     it 'should add only two methods' do
-      d = registry[:name, 'Boris'].first
+      d = registry.find(name: 'Boris').first
       expect(d.methods.count).to eq(a1_original_method_count + 2)
     end
 
     it 'should include expected methods' do
-      d = registry[:name, 'Boris'].first
+      d = registry.find(name: 'Boris').first
       expect(d.methods).to include(:__watched_name=, :__unwatched_name=)
     end
   end
@@ -119,14 +119,14 @@ RSpec.describe Registry do
     end
 
     it 'should not include expected methods' do
-      d = registry[:name, 'Dale'].first
+      d = registry.find(name: 'Dale').first
       registry.delete(d)
 
       expect(d.methods).to_not include(:__watched_name=, :__unwatched_name=)
     end
 
     it 'should set the name after removing an element from the registry' do
-      d = registry[:name, 'Dale'].first
+      d = registry.find(name: 'Dale').first
       registry.delete(d)
 
       d.name="Bob"
