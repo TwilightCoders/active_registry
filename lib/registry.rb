@@ -47,12 +47,8 @@ class Registry < Set
   alias << add
 
   def access(idx, value)
-    raise "No '#{idx}' index! Add it with '.index(:#{idx})'" and return SubSet.new unless @indexed.include?(idx)
-    elements = []
-    if (subset = @indexed[idx])
-      elements = subset[value] || []
-    end
-    elements
+    raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
+    @indexed.dig(idx, value) || []
   end
   alias [] access
 
