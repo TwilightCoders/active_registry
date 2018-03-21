@@ -2,7 +2,7 @@ class ActiveRegistry < Set
   class MoreThanOneRecordFound < StandardError
   end
 
-  VERSION = "0.1.0"
+  VERSION = "0.1.1"
 
   DEFAULT_INDEX = :object_id
 
