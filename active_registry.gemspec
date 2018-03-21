@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Dale Stevens"]
   spec.email         = ["dale@twilightcoders.net"]
 
-  spec.summary       = %q{Data Structure with multiple}
+  spec.summary       = %q{Data structure for quick item lookup via indexes.}
   # spec.description   = %q{}
   spec.homepage      = "https://github.com/TwilightCoders/active_registry."
   spec.license       = "MIT"
