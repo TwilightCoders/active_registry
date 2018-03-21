@@ -1,13 +1,13 @@
 require 'spec_helper'
 
-RSpec.describe Registry do
+RSpec.describe ActiveRegistry do
   Person = Struct.new(:id, :name, :email)
   let(:u1) { Person.new(1, 'Dale', 'dale@twilightcoders.net') }
   let(:u2) { Person.new(2, 'Dale', 'dale@billyjoel.com') }
   let(:u3) { Person.new(3, 'Foo', 'foobar@twilightcoders.net') }
 
   context 'Helper Methods' do
-    let!(:r1) { Registry.new([ u1, u2 ]) }
+    let!(:r1) { ActiveRegistry.new([ u1, u2 ]) }
 
     it 'should not raise error' do
       expect{r1.to_h}.to_not raise_error
@@ -19,7 +19,7 @@ RSpec.describe Registry do
   end
 
   context 'Adding' do
-    let!(:r1) { Registry.new([ u1, u2 ]) }
+    let!(:r1) { ActiveRegistry.new([ u1, u2 ]) }
 
     it 'should add the correct item' do
       r1 << u3
@@ -35,7 +35,7 @@ RSpec.describe Registry do
   end
 
   context 'Deleting' do
-    let!(:r1) { Registry.new([ u1, u2 ]) }
+    let!(:r1) { ActiveRegistry.new([ u1, u2 ]) }
 
     before(:each) do
       r1 << u3
@@ -54,7 +54,7 @@ RSpec.describe Registry do
   end
 
   context "Access" do
-    let!(:registry) { Registry.new([u1, u2, u3]) }
+    let!(:registry) { ActiveRegistry.new([u1, u2, u3]) }
 
     before(:each) do
       registry.index(:name, :email)
@@ -62,7 +62,7 @@ RSpec.describe Registry do
 
     it 'should return a registry' do
       subregistry = registry.where(name: 'Dale')
-      expect(subregistry).to be_a_kind_of(Registry)
+      expect(subregistry).to be_a_kind_of(ActiveRegistry)
     end
 
     it 'should be able to access with the subregistry' do
@@ -92,12 +92,12 @@ RSpec.describe Registry do
     end
 
     it 'should raise a MoreThanOneRecordFound exception' do
-      expect{registry.find!(name: 'Dale')}.to raise_error(Registry::MoreThanOneRecordFound)
+      expect{registry.find!(name: 'Dale')}.to raise_error(ActiveRegistry::MoreThanOneRecordFound)
     end
   end
 
   context "Indexing" do
-    let!(:registry) { Registry.new([ u1, u2 ]) }
+    let!(:registry) { ActiveRegistry.new([ u1, u2 ]) }
 
     before(:each) do
       registry.index(:name)
@@ -138,7 +138,7 @@ RSpec.describe Registry do
     let!(:a1) { Animal.new(1, 'Boris') }
     let!(:a1_original_methods) { a1.methods }
     let!(:a1_original_method_count) { a1.methods.count }
-    let!(:registry) { Registry.new([ a1 ]) }
+    let!(:registry) { ActiveRegistry.new([ a1 ]) }
 
     before(:each) do
       registry.index(:name)
@@ -156,7 +156,7 @@ RSpec.describe Registry do
   end
 
   context 'unwatches' do
-    let!(:registry) { Registry.new([ u1, u2 ]) }
+    let!(:registry) { ActiveRegistry.new([ u1, u2 ]) }
 
     before(:each) do
       registry.index(:name)

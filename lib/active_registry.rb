@@ -1,4 +1,4 @@
-class Registry < Set
+class ActiveRegistry < Set
   class MoreThanOneRecordFound < StandardError
   end
 
@@ -67,7 +67,7 @@ class Registry < Set
     end
 
     subset_records = sets.reduce(sets.first, &:&)
-    subset_registry = Registry.new(subset_records, indexes: indexes)
+    subset_registry = ActiveRegistry.new(subset_records, indexes: indexes)
     subset_registry
   end
 

@@ -1,16 +1,16 @@
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "registry"
+require "active_registry"
 
 Gem::Specification.new do |spec|
-  spec.name          = "registry"
-  spec.version       = Registry::VERSION
+  spec.name          = "active_registry"
+  spec.version       = ActiveRegistry::VERSION
   spec.authors       = ["Dale Stevens"]
   spec.email         = ["dale@twilightcoders.net"]
 
   spec.summary       = %q{Data Structure with multiple}
   # spec.description   = %q{}
-  spec.homepage      = "https://github.com/TwilightCoders/registry."
+  spec.homepage      = "https://github.com/TwilightCoders/active_registry."
   spec.license       = "MIT"
 
   if spec.respond_to?(:metadata)
