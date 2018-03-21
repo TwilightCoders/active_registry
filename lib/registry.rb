@@ -1,4 +1,6 @@
 class Registry < Set
+  class MoreThanOneRecordFound < StandardError
+  end
 
   VERSION = "0.1.0"
 
@@ -50,14 +52,22 @@ class Registry < Set
   end
   alias << add
 
+  def find!(search_criteria)
+    _find(search_criteria) { raise MoreThanOneRecordFound, "There were more than 1 records found" }
+  end
+
+  def find(search_criteria)
+    _find(search_criteria) { warn "There were more than 1 records found" }
+  end
+
   def where(search_criteria)
     sets = search_criteria.inject([]) do |sets, (idx, value)|
       raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
       sets << (@indexed.dig(idx, value) || Set.new)
     end
 
-    subset_elements = sets.reduce(sets.first, &:&)
-    subset_registry = Registry.new(subset_elements, indexes: indexes)
+    subset_records = sets.reduce(sets.first, &:&)
+    subset_registry = Registry.new(subset_records, indexes: indexes)
     subset_registry
   end
 
@@ -65,8 +75,8 @@ class Registry < Set
     indexes.each do |idx|
       warn "Index #{idx} already exists!" and next if @indexed.key?(idx)
       each { |item| watch_setter(item, idx) }
-      indexed_elements = group_by { |a| a.send(idx) }
-      indexed_sets = Hash[indexed_elements.keys.zip(indexed_elements.values.map { |e| Set.new(e) })]
+      indexed_records = group_by { |a| a.send(idx) }
+      indexed_sets = Hash[indexed_records.keys.zip(indexed_records.values.map { |e| Set.new(e) })]
       @indexed[idx] = indexed_sets
     end
   end
@@ -86,6 +96,12 @@ class Registry < Set
   end
 
   private
+
+  def _find(search_criteria)
+    results = where(search_criteria)
+    yield if block_given? && results.count > 1
+    results.first
+  end
 
   def watch_setter(item, idx)
     return if item.frozen?

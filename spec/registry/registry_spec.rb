@@ -3,8 +3,20 @@ require 'spec_helper'
 RSpec.describe Registry do
   Person = Struct.new(:id, :name, :email)
   let(:u1) { Person.new(1, 'Dale', 'dale@twilightcoders.net') }
-  let(:u2) { Person.new(2, 'Dale', 'dale@chillywinds.com') }
+  let(:u2) { Person.new(2, 'Dale', 'dale@billyjoel.com') }
   let(:u3) { Person.new(3, 'Foo', 'foobar@twilightcoders.net') }
+
+  context 'Helper Methods' do
+    let!(:r1) { Registry.new([ u1, u2 ]) }
+
+    it 'should not raise error' do
+      expect{r1.to_h}.to_not raise_error
+    end
+
+    it 'should not raise error' do
+      expect{r1.inspect}.to_not raise_error
+    end
+  end
 
   context 'Adding' do
     let!(:r1) { Registry.new([ u1, u2 ]) }
@@ -55,27 +67,43 @@ RSpec.describe Registry do
 
     it 'should be able to access with the subregistry' do
       subregistry = registry.where(name: 'Dale')
-      item = subregistry.where(email: 'dale@chillywinds.com')
+      item = subregistry.where(email: 'dale@billyjoel.com')
       expect(item.first).to eq(u2)
     end
 
     it 'should be able to access with the subregistry' do
-      subregistry = registry.where(name: 'Dale', email: 'dale@chillywinds.com')
+      subregistry = registry.where(name: 'Dale', email: 'dale@billyjoel.com')
       expect(subregistry.first).to eq(u2)
     end
 
     it 'should be able to access with the subregistry' do
-      subregistry = registry.where(name: 'Dale', email: 'snail@chillywinds.com')
+      subregistry = registry.where(name: 'Dale', email: 'snail@billyjoel.com')
       expect(subregistry.count).to eq(0)
+    end
+
+    it 'should find the element' do
+      item = registry.find(name: 'Dale', email: 'dale@billyjoel.com')
+      expect(item).to eq(u2)
+    end
+
+    it 'should find! the element' do
+      item = registry.find!(name: 'Dale', email: 'dale@billyjoel.com')
+      expect(item).to eq(u2)
+    end
+
+    it 'should raise a MoreThanOneRecordFound exception' do
+      expect{registry.find!(name: 'Dale')}.to raise_error(Registry::MoreThanOneRecordFound)
     end
   end
 
   context "Indexing" do
     let!(:registry) { Registry.new([ u1, u2 ]) }
 
-    it 'indexes' do
+    before(:each) do
       registry.index(:name)
+    end
 
+    it 'indexes' do
       expect(registry).to contain_mappings(
         object_id: {
           u1.object_id => [u1],
@@ -88,12 +116,20 @@ RSpec.describe Registry do
     end
 
     it 'reindexes' do
-      registry.index(:name)
-
       d = registry.where(name: 'Dale').first
       d.name = "Bob"
 
       expect(registry.where(name: 'Bob').first).to eq(d)
+    end
+
+    context 'Error conditions' do
+      it 'should raise exception when adding' do
+        expect{registry.add("billyjoel")}.to raise_error(StandardError)
+      end
+
+      it 'should raise exception when deleting' do
+        expect{registry.delete("billyjoel")}.to raise_error(StandardError)
+      end
     end
   end
 
