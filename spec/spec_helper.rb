@@ -7,7 +7,7 @@ SimpleCov.start do
   add_filter 'spec'
 end
 
-require 'active_registry'
+require 'registry'
 
 RSpec.configure do |config|
 end
