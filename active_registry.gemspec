@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Data structure for quick item lookup via indexes.}
   # spec.description   = %q{}
-  spec.homepage      = "https://github.com/TwilightCoders/active_registry."
+  spec.homepage      = "https://github.com/TwilightCoders/active_registry"
   spec.license       = "MIT"
 
   if spec.respond_to?(:metadata)
