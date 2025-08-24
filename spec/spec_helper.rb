@@ -1,11 +1,10 @@
+# frozen_string_literal: true
+
+require 'simplecov' # Will auto-load .simplecov config
+
 require 'pry'
 
-require 'simplecov'
-
 Dir['./spec/support/**/*.rb'].each { |f| require f }
-SimpleCov.start do
-  add_filter 'spec'
-end
 
 require 'registry'
 

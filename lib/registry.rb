@@ -1,8 +1,8 @@
+require_relative 'registry/version'
+
 class Registry < Set
 
   MoreThanOneRecordFound = Class.new(StandardError)
-
-  VERSION = "0.2.0"
 
   DEFAULT_INDEX = :object_id
 

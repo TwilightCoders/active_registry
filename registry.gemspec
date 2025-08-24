@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'lib/registry'
+require_relative 'lib/registry/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'registry'
@@ -30,4 +30,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec_junit_formatter', '~> 0.6'
   spec.add_development_dependency 'rubocop', '~> 1.50'
   spec.add_development_dependency 'simplecov', '~> 0.22'
+  spec.add_development_dependency 'simplecov-json', '~> 0.2'
 end
