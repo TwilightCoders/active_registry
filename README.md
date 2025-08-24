@@ -1,15 +1,13 @@
-[![Version      ](https://img.shields.io/gem/v/registry.svg)](https://rubygems.org/gems/registry)
-[![Build Status ](https://travis-ci.org/TwilightCoders/registry.svg)](https://travis-ci.org/TwilightCoders/registry)
-[![Code Climate ](https://api.codeclimate.com/v1/badges/a18ae809af878357acfa/maintainability)](https://codeclimate.com/github/TwilightCoders/registry/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/a18ae809af878357acfa/test_coverage)](https://codeclimate.com/github/TwilightCoders/registry/test_coverage)
-[![Dependencies ](https://gemnasium.com/badges/github.com/TwilightCoders/registry.svg)](https://gemnasium.com/github.com/TwilightCoders/registry)
+[![Version](https://img.shields.io/gem/v/registry.svg)](https://rubygems.org/gems/registry)
+[![Build Status](https://github.com/TwilightCoders/registry/workflows/CI/badge.svg)](https://github.com/TwilightCoders/registry/actions)
+[![Code Quality](https://img.shields.io/badge/qlty-monitored-blue)](https://qlty.sh)
 
 # Registry
 
 Provides a data structure for collecting homogeneous objects and indexing them for quick lookup.
 
 ## Requirements
-Ruby 2.3+
+Ruby 3.0+
 
 ## Installation
 
