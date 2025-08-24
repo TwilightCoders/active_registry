@@ -42,7 +42,8 @@ class Registry < Set
         store.delete(idx_value) if store[idx_value].empty?
       rescue NoMethodError
         raise MissingAttributeError,
-              "Item #{item.inspect} cannot be deleted because indexable attribute '#{idx}' is missing or not accessible."
+              "Item #{item.inspect} cannot be deleted because indexable attribute '#{idx}' " \
+              'is missing or not accessible.'
       end
     end
     @watched_objects.delete(item)

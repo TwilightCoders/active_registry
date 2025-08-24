@@ -2,42 +2,46 @@ AllCops:
   TargetRubyVersion: 3.0
   NewCops: enable
   Exclude:
-    - 'vendor/**/*'
-    - 'coverage/**/*'
-    - 'pkg/**/*'
+    - vendor/**/*
+    - coverage/**/*
+    - pkg/**/*
 
 Style/Documentation:
   Enabled: false
 
+Layout/FirstArrayElementIndentation:
+  Exclude:
+    - spec/**/*
+
 Metrics/BlockLength:
   Exclude:
-    - 'spec/**/*'
+    - spec/**/*
 
 Metrics/ClassLength:
   Exclude:
-    - 'lib/registry.rb'
+    - lib/registry.rb
 
 Metrics/MethodLength:
   Max: 20
 
 Lint/ConstantDefinitionInBlock:
   Exclude:
-    - 'spec/**/*'
+    - spec/**/*
 
 Lint/EmptyBlock:
   Exclude:
-    - 'spec/**/*'
+    - spec/**/*
 
 Metrics/AbcSize:
   Exclude:
-    - 'lib/registry.rb'
+    - lib/registry.rb
 
 Gemspec/DevelopmentDependencies:
   Enabled: false
 
 Lint/UnderscorePrefixedVariableName:
   Exclude:
-    - 'lib/registry.rb'
+    - lib/registry.rb
 
 Layout/LineLength:
   Max: 120

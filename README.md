@@ -1,12 +1,13 @@
+# Registry
+
 [![Version](https://img.shields.io/gem/v/registry.svg)](https://rubygems.org/gems/registry)
 [![Build Status](https://github.com/TwilightCoders/registry/workflows/CI/badge.svg)](https://github.com/TwilightCoders/registry/actions)
 [![Code Quality](https://img.shields.io/badge/qlty-monitored-blue)](https://qlty.sh)
 
-# Registry
-
 Provides a data structure for collecting homogeneous objects and indexing them for quick lookup.
 
 ## Requirements
+
 Ruby 3.0+
 
 ## Installation
@@ -19,11 +20,15 @@ gem 'registry'
 
 And then execute:
 
-    $ bundle
+```bash
+bundle
+```
 
 Or install it yourself as:
 
-    $ gem install registry
+```bash
+gem install registry
+```
 
 ## Usage
 
@@ -54,18 +59,21 @@ registry.where(name: 'Jason') # Contains the updated item
 ### Advanced Features
 
 #### Thread Safety
+
 ```ruby
 # Create a thread-safe registry
 registry = Registry.new(items, thread_safe: true)
 ```
 
 #### Memory Management
+
 ```ruby
 # Clean up method watching for long-lived registries
 registry.cleanup!
 ```
 
 #### Error Handling
+
 ```ruby
 begin
   registry.where(nonexistent_index: 'value')
@@ -86,7 +94,10 @@ After checking out the repo, run `bundle` to install dependencies. Then, run `bu
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/TwilightCoders/registry. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at
+<https://github.com/TwilightCoders/registry>. This project is intended to be a safe,
+welcoming space for collaboration, and contributors are expected to adhere to the
+[Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 ## License
 
