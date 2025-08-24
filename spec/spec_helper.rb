@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'simplecov' # Will auto-load .simplecov config
-
 require 'pry'
+
+require 'simplecov' # Will auto-load .simplecov config
 
 Dir['./spec/support/**/*.rb'].each { |f| require f }
 

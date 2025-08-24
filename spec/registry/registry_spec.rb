@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe Registry do
@@ -7,19 +9,19 @@ RSpec.describe Registry do
   let(:u3) { Person.new(3, 'Foo', 'foobar@twilightcoders.net') }
 
   context 'Helper Methods' do
-    let!(:r1) { Registry.new([ u1, u2 ]) }
+    let!(:r1) { Registry.new([u1, u2]) }
 
     it 'should not raise error' do
-      expect{r1.to_h}.to_not raise_error
+      expect { r1.to_h }.to_not raise_error
     end
 
     it 'should not raise error' do
-      expect{r1.inspect}.to_not raise_error
+      expect { r1.inspect }.to_not raise_error
     end
   end
 
   context 'Adding' do
-    let!(:r1) { Registry.new([ u1, u2 ]) }
+    let!(:r1) { Registry.new([u1, u2]) }
 
     it 'should add the correct item' do
       r1 << u3
@@ -35,7 +37,7 @@ RSpec.describe Registry do
   end
 
   context 'Deleting' do
-    let!(:r1) { Registry.new([ u1, u2 ]) }
+    let!(:r1) { Registry.new([u1, u2]) }
 
     before(:each) do
       r1 << u3
@@ -53,7 +55,7 @@ RSpec.describe Registry do
     end
   end
 
-  context "Access" do
+  context 'Access' do
     let!(:registry) { Registry.new([u1, u2, u3]) }
 
     before(:each) do
@@ -92,12 +94,12 @@ RSpec.describe Registry do
     end
 
     it 'should raise a MoreThanOneRecordFound exception' do
-      expect{registry.find!(name: 'Dale')}.to raise_error(Registry::MoreThanOneRecordFound)
+      expect { registry.find!(name: 'Dale') }.to raise_error(Registry::MoreThanOneRecordFound)
     end
   end
 
-  context "Indexing" do
-    let!(:registry) { Registry.new([ u1, u2 ]) }
+  context 'Indexing' do
+    let!(:registry) { Registry.new([u1, u2]) }
 
     before(:each) do
       registry.index(:name)
@@ -110,25 +112,25 @@ RSpec.describe Registry do
           u2.object_id => [u2]
         },
         name: {
-          "Dale" => [u1, u2]
+          'Dale' => [u1, u2]
         }
       )
     end
 
     it 'reindexes' do
       d = registry.where(name: 'Dale').first
-      d.name = "Bob"
+      d.name = 'Bob'
 
       expect(registry.where(name: 'Bob').first).to eq(d)
     end
 
     context 'Error conditions' do
       it 'should raise exception when adding' do
-        expect{registry.add("billyjoel")}.to raise_error(StandardError)
+        expect { registry.add('billyjoel') }.to raise_error(StandardError)
       end
 
       it 'should raise exception when deleting' do
-        expect{registry.delete("billyjoel")}.to raise_error(StandardError)
+        expect { registry.delete('billyjoel') }.to raise_error(StandardError)
       end
     end
   end
@@ -138,7 +140,7 @@ RSpec.describe Registry do
     let!(:a1) { Animal.new(1, 'Boris') }
     let!(:a1_original_methods) { a1.methods }
     let!(:a1_original_method_count) { a1.methods.count }
-    let!(:registry) { Registry.new([ a1 ]) }
+    let!(:registry) { Registry.new([a1]) }
 
     before(:each) do
       registry.index(:name)
@@ -156,7 +158,7 @@ RSpec.describe Registry do
   end
 
   context 'unwatches' do
-    let!(:registry) { Registry.new([ u1, u2 ]) }
+    let!(:registry) { Registry.new([u1, u2]) }
 
     before(:each) do
       registry.index(:name)
@@ -173,8 +175,8 @@ RSpec.describe Registry do
       d = registry.where(name: 'Dale').first
       registry.delete(d)
 
-      d.name="Bob"
-      expect(d.name).to eq("Bob")
+      d.name = 'Bob'
+      expect(d.name).to eq('Bob')
     end
   end
 end

@@ -1,7 +1,7 @@
+# frozen_string_literal: true
 require_relative 'registry/version'
 
 class Registry < Set
-
   MoreThanOneRecordFound = Class.new(StandardError)
 
   DEFAULT_INDEX = :object_id
@@ -31,11 +31,11 @@ class Registry < Set
         idx_value = item.send(idx)
         (store[idx_value] ||= Set.new).delete(item)
         store.delete(idx_value) if store[idx_value].empty?
-      rescue NoMethodError => e
+      rescue NoMethodError
         raise "#{item.name} cannot be added because indexable attribute (#{idx}) is missing."
       end
     end
-    super(item)
+    super
   end
 
   def add(item)
@@ -43,40 +43,41 @@ class Registry < Set
       watch_setter(item, idx) unless include?(item)
       begin
         idx_value = item.send(idx)
-        (store[idx_value] ||= Set.new) << (item)
-      rescue NoMethodError => e
+        (store[idx_value] ||= Set.new) << item
+      rescue NoMethodError
         raise "#{item.name} cannot be added because indexable attribute (#{idx}) is missing."
       end
     end
-    super(item)
+    super
   end
   alias << add
 
   def find!(search_criteria)
-    _find(search_criteria) { raise MoreThanOneRecordFound, "There were more than 1 records found" }
+    _find(search_criteria) { raise MoreThanOneRecordFound, 'There were more than 1 records found' }
   end
 
   def find(search_criteria)
-    _find(search_criteria) { warn "There were more than 1 records found" }
+    _find(search_criteria) { warn 'There were more than 1 records found' }
   end
 
   def where(search_criteria)
     sets = search_criteria.inject([]) do |sets, (idx, value)|
       raise "No '#{idx}' index! Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
+
       sets << (@indexed.dig(idx, value) || Set.new)
     end
 
     subset_records = sets.reduce(sets.first, &:&)
-    subset_registry = Registry.new(subset_records, indexes: indexes)
-    subset_registry
+    Registry.new(subset_records, indexes: indexes)
   end
 
   def index(*indexes)
     indexes.each do |idx|
       warn "Index #{idx} already exists!" and next if @indexed.key?(idx)
+
       each { |item| watch_setter(item, idx) }
       indexed_records = group_by { |a| a.send(idx) }
-      indexed_sets = Hash[indexed_records.keys.zip(indexed_records.values.map { |e| Set.new(e) })]
+      indexed_sets = indexed_records.keys.zip(indexed_records.values.map { |e| Set.new(e) }).to_h
       @indexed[idx] = indexed_sets
     end
   end
@@ -89,10 +90,10 @@ class Registry < Set
   protected
 
   def reindex(idx, item, old_value, new_value)
-    if (new_value != old_value)
-      @indexed[idx][old_value].delete item
-      (@indexed[idx][new_value] ||= Set.new).add item
-    end
+    return unless new_value != old_value
+
+    @indexed[idx][old_value].delete item
+    (@indexed[idx][new_value] ||= Set.new).add item
   end
 
   private
@@ -105,10 +106,11 @@ class Registry < Set
 
   def watch_setter(item, idx)
     return if item.frozen?
+
     __registry__ = self
     item.public_methods.select { |m| m.match(/^#{idx}=$/) }.each do |original_method|
-      watched_method = "__watched_#{original_method}".to_sym
-      renamed_method = "__unwatched_#{original_method}".to_sym
+      watched_method = :"__watched_#{original_method}"
+      renamed_method = :"__unwatched_#{original_method}"
       next if item.methods.include?(watched_method)
 
       item.singleton_class.class_eval do
@@ -126,10 +128,12 @@ class Registry < Set
 
   def ignore_setter(item, idx)
     return if item.frozen?
+
     item.public_methods.select { |m| m.match(/^#{idx}=$/) }.each do |original_method|
-      watched_method = "__watched_#{original_method}".to_sym
-      renamed_method = "__unwatched_#{original_method}".to_sym
+      watched_method = :"__watched_#{original_method}"
+      renamed_method = :"__unwatched_#{original_method}"
       next unless item.methods.include?(watched_method)
+
       item.singleton_class.class_eval do
         alias_method original_method, renamed_method
         remove_method(watched_method)
@@ -137,5 +141,4 @@ class Registry < Set
       end
     end
   end
-
 end
