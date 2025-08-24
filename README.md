@@ -27,20 +27,57 @@ Or install it yourself as:
 
 ## Usage
 
+### Basic Usage
+
 ```ruby
-  Person = Struct.new(:id, :name, :email)
+Person = Struct.new(:id, :name, :email)
 
-  registry = Registry.new([
-    Person.new(1, 'Dale', 'jason@twilightcoders.net'),
-    Person.new(2, 'Dale', 'dale@twilightcoders.net')
-  ])
+registry = Registry.new([
+  Person.new(1, 'Dale', 'jason@twilightcoders.net'),
+  Person.new(2, 'Dale', 'dale@twilightcoders.net')
+])
 
-  registry.index(:name)
+registry.index(:name)
 
-  d = registry[:name, 'Dale'].first
-  d.name = "Jason"
+# Find items using where method
+results = registry.where(name: 'Dale')
 
-  registry.find(:name, 'Jason')
+# Check if items exist
+registry.exists?(name: 'Dale') #=> true
+
+# Automatic reindexing when attributes change
+d = registry.where(name: 'Dale').first
+d.name = "Jason"
+registry.where(name: 'Jason') # Contains the updated item
+```
+
+### Advanced Features
+
+#### Thread Safety
+```ruby
+# Create a thread-safe registry
+registry = Registry.new(items, thread_safe: true)
+```
+
+#### Memory Management
+```ruby
+# Clean up method watching for long-lived registries
+registry.cleanup!
+```
+
+#### Error Handling
+```ruby
+begin
+  registry.where(nonexistent_index: 'value')
+rescue Registry::IndexNotFound => e
+  puts "Index not found: #{e.message}"
+end
+
+begin
+  registry.add("invalid item")
+rescue Registry::MissingAttributeError => e
+  puts "Missing required attributes: #{e.message}"
+end
 ```
 
 ## Development
