@@ -92,4 +92,45 @@ RSpec.describe Registry do
       expect(Registry::MissingAttributeError.ancestors).to include(Registry::RegistryError)
     end
   end
+
+  context 'Query caching' do
+    let!(:registry) { Registry.new([u1, u2, u3, u4]) }
+
+    before(:each) do
+      registry.index(:name, :age)
+    end
+
+    describe '#cache_stats' do
+      it 'should track cache hits and misses' do
+        # First query - cache miss
+        registry.where(name: 'Dale')
+        stats = registry.cache_stats
+        expect(stats[:misses]).to eq(1)
+        expect(stats[:hits]).to eq(0)
+
+        # Second identical query - cache hit
+        registry.where(name: 'Dale')
+        stats = registry.cache_stats
+        expect(stats[:hits]).to eq(1)
+        expect(stats[:misses]).to eq(1)
+        expect(stats[:hit_rate]).to eq(50.0)
+      end
+
+      it 'should invalidate cache on registry changes' do
+        # Prime the cache
+        registry.where(name: 'Dale')
+        registry.where(name: 'Dale')
+        expect(registry.cache_stats[:hits]).to eq(1)
+
+        # Add new item - should clear cache
+        u5 = Employee.new(5, 'Dale', 'dale@new.com', 28)
+        registry.add(u5)
+
+        # Next query should be a cache miss
+        registry.where(name: 'Dale')
+        stats = registry.cache_stats
+        expect(stats[:misses]).to eq(2) # Original miss + new miss after invalidation
+      end
+    end
+  end
 end
