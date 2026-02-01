@@ -36,6 +36,14 @@ Metrics/AbcSize:
   Exclude:
     - lib/registry.rb
 
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - lib/registry.rb
+
+Metrics/PerceivedComplexity:
+  Exclude:
+    - lib/registry.rb
+
 Gemspec/DevelopmentDependencies:
   Enabled: false
 

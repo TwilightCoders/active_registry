@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'registry/version'
 
 require 'set'
@@ -16,6 +17,9 @@ class Registry < Set
   class MoreThanOneRecordFound < RegistryError; end
   class IndexNotFound < RegistryError; end
   class MissingAttributeError < RegistryError; end
+  class ThreadSafetyError < RegistryError; end
+
+  VERSION = REGISTRY_VERSION
 
   DEFAULT_INDEX = :object_id
 
@@ -83,9 +87,12 @@ class Registry < Set
     _find(search_criteria) { warn 'There were more than 1 records found' }
   end
 
-  def where(search_criteria)
+  def where(limit: nil, offset: 0, **search_criteria)
     with_thread_safety do
-      cache_key = [:where, search_criteria.sort]
+      # Handle nil or empty criteria
+      return new_registry_from_set(Set.new) if search_criteria.nil? || search_criteria.empty?
+
+      cache_key = [:where, search_criteria.sort, limit, offset]
       cached_result = check_cache(cache_key)
       return new_registry_from_set(cached_result) if cached_result
 
@@ -94,15 +101,38 @@ class Registry < Set
                    else
                      multi_criteria_search(search_criteria)
                    end
+
+      # Apply pagination if specified
+      if limit || offset.positive?
+        records_array = result_set.to_a
+        start_idx = offset
+        end_idx = limit ? start_idx + limit - 1 : -1
+        result_set = Set.new(records_array[start_idx..end_idx] || [])
+      end
+
       store_in_cache(cache_key, result_set)
       new_registry_from_set(result_set)
     end
   end
 
   # Check if any items exist matching the criteria
-  def exists?(search_criteria)
+  def exists?(**search_criteria)
     with_thread_safety do
       search_criteria.size == 1 ? single_criteria_exists?(search_criteria) : multi_criteria_exists?(search_criteria)
+    end
+  end
+
+  # Count items matching the criteria without creating a Registry object
+  def count_where(**search_criteria)
+    with_thread_safety do
+      return 0 if search_criteria.nil? || search_criteria.empty?
+
+      result_set = if search_criteria.size == 1
+                     single_criteria_search(search_criteria)
+                   else
+                     multi_criteria_search(search_criteria)
+                   end
+      result_set.size
     end
   end
 
@@ -116,7 +146,7 @@ class Registry < Set
   private
 
   def _find(search_criteria)
-    results = where(search_criteria)
+    results = where(**search_criteria)
     yield if block_given? && results.count > 1
     results.first
   end

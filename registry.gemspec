@@ -4,7 +4,7 @@ require_relative 'lib/registry/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'registry'
-  spec.version       = Registry::VERSION
+  spec.version       = REGISTRY_VERSION
   spec.authors       = ['Dale Stevens']
   spec.email         = ['dale@twilightcoders.net']
 

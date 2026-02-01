@@ -31,6 +31,68 @@ RSpec.describe Registry do
       end
     end
 
+    describe '#count_where' do
+      it 'should return count without creating Registry object' do
+        expect(registry.count_where(name: 'Dale')).to eq(2)
+      end
+
+      it 'should return 0 for non-matching criteria' do
+        expect(registry.count_where(name: 'NonExistent')).to eq(0)
+      end
+
+      it 'should work with multiple criteria' do
+        expect(registry.count_where(name: 'Dale', age: 30)).to eq(1)
+      end
+
+      it 'should return 0 for empty criteria' do
+        expect(registry.count_where).to eq(0)
+      end
+
+      it 'should return 0 for nil criteria' do
+        expect(registry.count_where).to eq(0)
+      end
+    end
+
+    describe '#where with pagination' do
+      it 'should support limit parameter' do
+        results = registry.where(name: 'Dale', limit: 1)
+        expect(results.count).to eq(1)
+      end
+
+      it 'should support offset parameter' do
+        results = registry.where(name: 'Dale', offset: 1)
+        expect(results.count).to eq(1)
+      end
+
+      it 'should support both limit and offset' do
+        registry.add(Employee.new(5, 'Dale', 'dale5@example.com', 40))
+        results = registry.where(name: 'Dale', limit: 1, offset: 1)
+        expect(results.count).to eq(1)
+      end
+
+      it 'should handle offset beyond results' do
+        results = registry.where(name: 'Dale', offset: 10)
+        expect(results.count).to eq(0)
+      end
+
+      it 'should handle limit larger than results' do
+        results = registry.where(name: 'Dale', limit: 100)
+        expect(results.count).to eq(2)
+      end
+
+      it 'should return empty Registry for nil criteria' do
+        results = registry.where
+        expect(results).to be_a(Registry)
+        expect(results.count).to eq(0)
+      end
+
+      it 'should return empty Registry for empty criteria' do
+        results = registry.where
+        expect(results).to be_a(Registry)
+        expect(results.count).to eq(0)
+      end
+    end
+
     describe 'Better error handling' do
       it 'should raise IndexNotFound for missing indexes' do
         expect { registry.where(nonexistent: 'value') }
@@ -90,6 +152,7 @@ RSpec.describe Registry do
       expect(Registry::MoreThanOneRecordFound.ancestors).to include(Registry::RegistryError)
       expect(Registry::IndexNotFound.ancestors).to include(Registry::RegistryError)
       expect(Registry::MissingAttributeError.ancestors).to include(Registry::RegistryError)
+      expect(Registry::ThreadSafetyError.ancestors).to include(Registry::RegistryError)
     end
   end
 
