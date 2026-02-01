@@ -1,8 +1,9 @@
 # Registry
 
 [![Version](https://img.shields.io/gem/v/registry.svg)](https://rubygems.org/gems/registry)
-[![Build Status](https://github.com/TwilightCoders/registry/workflows/CI/badge.svg)](https://github.com/TwilightCoders/registry/actions)
-[![Code Quality](https://img.shields.io/badge/qlty-monitored-blue)](https://qlty.sh)
+[![CI](https://github.com/TwilightCoders/active_registry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TwilightCoders/active_registry/actions/workflows/ci.yml)
+[![Code Coverage](https://qlty.sh/gh/TwilightCoders/projects/active_registry/coverage.svg)](https://qlty.sh/gh/TwilightCoders/projects/active_registry)
+[![Maintainability](https://qlty.sh/gh/TwilightCoders/projects/active_registry/maintainability.svg)](https://qlty.sh/gh/TwilightCoders/projects/active_registry)
 
 Provides a data structure for collecting homogeneous objects and indexing them for quick lookup.
 
@@ -95,7 +96,7 @@ After checking out the repo, run `bundle` to install dependencies. Then, run `bu
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at
-<https://github.com/TwilightCoders/registry>. This project is intended to be a safe,
+<https://github.com/TwilightCoders/active_registry>. This project is intended to be a safe,
 welcoming space for collaboration, and contributors are expected to adhere to the
 [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
