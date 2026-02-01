@@ -2,8 +2,15 @@
 require_relative 'registry/version'
 
 require 'set'
+require_relative 'registry/index_store'
+require_relative 'registry/query_cache'
+require_relative 'registry/method_watcher'
 
 class Registry < Set
+  include RegistryIndexStore
+  include RegistryQueryCache
+  include RegistryMethodWatcher
+
   # Exception classes for better error handling
   class RegistryError < StandardError; end
   class MoreThanOneRecordFound < RegistryError; end
@@ -13,15 +20,14 @@ class Registry < Set
   DEFAULT_INDEX = :object_id
 
   def initialize(*args, indexes: [], thread_safe: false)
-    @indexed = {}
     @thread_safe = thread_safe
     @mutex = Mutex.new if @thread_safe
-    @watched_objects = Set.new # Track objects with watched methods for cleanup
-    @method_cache = {} # Cache setter method lookups
-    @batch_mode = false # For optimizing bulk operations
-    @query_cache = {} # Cache frequent query results
-    @cache_hits = 0 # Performance tracking
-    @cache_misses = 0
+
+    # Initialize module-specific state
+    initialize_index_store
+    initialize_query_cache
+    initialize_method_watcher
+
     super(*args)
     reindex!(indexes)
   end
@@ -32,10 +38,6 @@ class Registry < Set
 
   def to_h
     @indexed
-  end
-
-  def indexes
-    @indexed.keys - [:object_id]
   end
 
   def delete(item)
@@ -51,9 +53,8 @@ class Registry < Set
               'is missing or not accessible.'
       end
     end
-    @watched_objects.delete(item)
-    # Invalidate query cache when registry changes
-    @query_cache.clear
+    remove_from_watched_objects(item)
+    invalidate_cache
     super
   end
 
@@ -68,9 +69,8 @@ class Registry < Set
               "Item #{item.inspect} cannot be added because indexable attribute '#{idx}' is missing or not accessible."
       end
     end
-    @watched_objects.add(item) unless include?(item)
-    # Invalidate query cache when registry changes
-    @query_cache.clear
+    add_to_watched_objects(item) unless include?(item)
+    invalidate_cache
     super
   end
   alias << add
@@ -84,148 +84,33 @@ class Registry < Set
   end
 
   def where(search_criteria)
-    # Check cache first for frequent queries
-    cache_key = [:where, search_criteria.sort]
-    if @query_cache.key?(cache_key)
-      @cache_hits += 1
-      cached_items = @query_cache[cache_key]
-      return Registry.new(cached_items.to_a, indexes: indexes, thread_safe: @thread_safe)
-    end
-    @cache_misses += 1
+    with_thread_safety do
+      cache_key = [:where, search_criteria.sort]
+      cached_result = check_cache(cache_key)
+      return new_registry_from_set(cached_result) if cached_result
 
-    # Fast path for single criteria - avoid array creation and reduce operations
-    if search_criteria.size == 1
-      idx, value = search_criteria.first
-      unless @indexed.include?(idx)
-        raise IndexNotFound,
-              "Index '#{idx}' not found. Available indexes: #{indexes.inspect}. Add it with '.index(:#{idx})'"
-      end
-      
-      result_set = @indexed.dig(idx, value) || Set.new
-      # Cache the result set for future queries
-      @query_cache[cache_key] = result_set.dup
-      return Registry.new(result_set.to_a, indexes: indexes, thread_safe: @thread_safe)
+      result_set = if search_criteria.size == 1
+                     single_criteria_search(search_criteria)
+                   else
+                     multi_criteria_search(search_criteria)
+                   end
+      store_in_cache(cache_key, result_set)
+      new_registry_from_set(result_set)
     end
-
-    # Multi-criteria path - optimize intersection logic
-    result_set = nil
-    search_criteria.each do |idx, value|
-      unless @indexed.include?(idx)
-        raise IndexNotFound,
-              "Index '#{idx}' not found. Available indexes: #{indexes.inspect}. Add it with '.index(:#{idx})'"
-      end
-
-      current_set = @indexed.dig(idx, value) || Set.new
-      result_set = result_set ? (result_set & current_set) : current_set
-      
-      # Early exit if no intersection possible
-      break if result_set.empty?
-    end
-
-    final_result = result_set || Set.new
-    # Cache the result set for future queries (limit cache size)
-    if @query_cache.size < 1000
-      @query_cache[cache_key] = final_result.dup
-    end
-    
-    Registry.new(final_result.to_a, indexes: indexes, thread_safe: @thread_safe)
   end
 
   # Check if any items exist matching the criteria
   def exists?(search_criteria)
     with_thread_safety do
-      # Fast path for single criteria
-      if search_criteria.size == 1
-        idx, value = search_criteria.first
-        raise IndexNotFound, 
-              "Index '#{idx}' not found. Available indexes: #{indexes.inspect}. " \
-              "Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
-        
-        return @indexed.dig(idx, value)&.any? || false
-      end
-      
-      # Multi-criteria path with intersection logic
-      result_set = nil
-      search_criteria.each do |idx, value|
-        raise IndexNotFound, 
-              "Index '#{idx}' not found. Available indexes: #{indexes.inspect}. " \
-              "Add it with '.index(:#{idx})'" unless @indexed.include?(idx)
-
-        current_set = @indexed.dig(idx, value)
-        return false if current_set.nil? || current_set.empty?
-        
-        result_set = result_set ? (result_set & current_set) : current_set
-        return false if result_set.empty?
-      end
-      
-      true
+      search_criteria.size == 1 ? single_criteria_exists?(search_criteria) : multi_criteria_exists?(search_criteria)
     end
   end
 
-  def index(*indexes)
-    indexes.each do |idx|
-      warn "Index #{idx} already exists!" and next if @indexed.key?(idx)
-
-      # Optimize: Build index hash directly instead of using group_by + transformation
-      index_hash = {}
-      each do |item|
-        watch_setter(item, idx)
-        @watched_objects.add(item) # Track watched objects
-        
-        # Get the index value and build the index in one pass
-        begin
-          idx_value = item.send(idx)
-          (index_hash[idx_value] ||= Set.new) << item
-        rescue NoMethodError
-          raise MissingAttributeError,
-                "Item #{item.inspect} cannot be indexed because attribute '#{idx}' is missing or not accessible."
-        end
-      end
-      @indexed[idx] = index_hash
-    end
-  end
-
-  def reindex!(indexes = [])
+  def reindex!(new_indexes = [])
     cleanup_watched_methods # Clean up before reindexing
     @indexed = {}
-    index(*([DEFAULT_INDEX] | indexes))
-  end
-
-  # Clean up method watching for memory management
-  def cleanup_watched_methods
-    @watched_objects.each do |item|
-      @indexed.each_key { |idx| ignore_setter(item, idx) }
-    end
-    @watched_objects.clear
-  end
-
-  # Manual cleanup method for long-lived registries
-  def cleanup!
-    cleanup_watched_methods
-  end
-
-  # Cache statistics for performance monitoring
-  def cache_stats
-    total_queries = @cache_hits + @cache_misses
-    return { hits: 0, misses: 0, hit_rate: 0.0, total_queries: 0 } if total_queries == 0
-    
-    {
-      hits: @cache_hits,
-      misses: @cache_misses,
-      hit_rate: (@cache_hits.to_f / total_queries * 100).round(2),
-      total_queries: total_queries
-    }
-  end
-
-  protected
-
-  def reindex(idx, item, old_value, new_value)
-    return unless new_value != old_value
-
-    @indexed[idx][old_value].delete item
-    (@indexed[idx][new_value] ||= Set.new).add item
-    # Invalidate query cache when items change
-    @query_cache.clear
+    @indexes = []
+    index(*([DEFAULT_INDEX] | new_indexes))
   end
 
   private
@@ -236,67 +121,57 @@ class Registry < Set
     results.first
   end
 
-  def watch_setter(item, idx)
-    return if item.frozen?
-
-    # Use cached method lookup
-    item_class = item.class
-    cache_key = [item_class, idx]
-    
-    setter_method = @method_cache[cache_key] ||= begin
-      method_name = :"#{idx}="
-      item_class.instance_methods.include?(method_name) ? method_name : nil
-    end
-    
-    return unless setter_method
-    
-    watched_method = :"__watched_#{setter_method}"
-    return if item.methods.include?(watched_method)
-
-    # Optimize: Reduce closure overhead by storing registry reference directly on item
-    item.instance_variable_set(:@__registry__, self) unless item.instance_variable_defined?(:@__registry__)
-    original_method = setter_method
-    renamed_method = :"__unwatched_#{original_method}"
-
-    item.singleton_class.class_eval do
-      define_method(watched_method) do |*args|
-        old_value = send(idx) # Use direct send instead of item.send
-        send(renamed_method, *args).tap do |new_value|
-          instance_variable_get(:@__registry__).send(:reindex, idx, self, old_value, new_value)
-        end
-      end
-      alias_method renamed_method, original_method
-      alias_method original_method, watched_method
-    end
+  def new_registry_from_set(set)
+    Registry.new(set.to_a, indexes: indexes, thread_safe: @thread_safe)
   end
 
-  def ignore_setter(item, idx)
-    return if item.frozen?
+  def validate_index_exists!(idx)
+    return if index_exists?(idx)
 
-    # Use cached method lookup
-    item_class = item.class
-    cache_key = [item_class, idx]
-    setter_method = @method_cache[cache_key]
-    
-    return unless setter_method
+    raise IndexNotFound,
+          "Index '#{idx}' not found. Available indexes: #{indexes.inspect}. Add it with '.index(:#{idx})'"
+  end
 
-    original_method = setter_method
-    watched_method = :"__watched_#{original_method}"
-    renamed_method = :"__unwatched_#{original_method}"
-    
-    return unless item.methods.include?(watched_method)
+  def single_criteria_search(search_criteria)
+    idx, value = search_criteria.first
+    validate_index_exists!(idx)
+    lookup_index(idx, value)
+  end
 
-    item.singleton_class.class_eval do
-      alias_method original_method, renamed_method
-      remove_method(watched_method)
-      remove_method(renamed_method)
+  def multi_criteria_search(search_criteria)
+    result_set = nil
+    search_criteria.each do |idx, value|
+      validate_index_exists!(idx)
+      current_set = lookup_index(idx, value)
+      result_set = result_set ? (result_set & current_set) : current_set
+      break if result_set.empty?
     end
+    result_set || Set.new
+  end
+
+  def single_criteria_exists?(search_criteria)
+    idx, value = search_criteria.first
+    validate_index_exists!(idx)
+    lookup_index(idx, value).any?
+  end
+
+  def multi_criteria_exists?(search_criteria)
+    result_set = nil
+    search_criteria.each do |idx, value|
+      validate_index_exists!(idx)
+      current_set = lookup_index(idx, value)
+      return false if current_set.nil? || current_set.empty?
+
+      result_set = result_set ? (result_set & current_set) : current_set
+      return false if result_set.empty?
+    end
+    true
   end
 
   # Thread safety wrapper
-  def with_thread_safety
+  def with_thread_safety(&block)
     if @thread_safe
-      @mutex.synchronize { yield }
+      @mutex.synchronize(&block)
     else
       yield
     end
